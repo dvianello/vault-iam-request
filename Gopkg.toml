@@ -1,0 +1,13 @@
+# Gopkg.toml for vault-iam-requests
+
+[[constraint]]
+  name = "github.com/hashicorp/vault"
+  version = "0.10.4"
+
+[[constraint]]
+  name = "github.com/jessevdk/go-flags"
+  version = "1.4.0"
+
+[prune]
+  go-tests = true
+  unused-packages = true

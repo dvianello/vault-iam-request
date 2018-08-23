@@ -1,14 +1,22 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/hashicorp/vault/builtin/credential/aws"
-	"github.com/jessevdk/go-flags"
-	"log"
 	"os"
+	"github.com/jessevdk/go-flags"
+	"github.com/hashicorp/vault/builtin/credential/aws"
+	"log"
+	"fmt"
+	"encoding/json"
 	"strings"
 )
+
+func buildConcourseFormat(rawLoginData map[string]interface{}) string {
+	buffer := make([]string, 0)
+	for k, v := range rawLoginData {
+		buffer = append(buffer, fmt.Sprintf("%s=\"%s\"", k, v))
+	}
+	return strings.Join(buffer, ",")
+}
 
 func main() {
 
@@ -63,13 +71,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Build format required by Concourse.
-	// Create buffer and append "k=v" for all keys in loginData.
-	buffer := make([]string, 0)
-	for k, v := range loginData {
-		buffer = append(buffer, fmt.Sprintf("%s=\"%s\"", k, v))
-	}
-
-	fmt.Fprintln(&output.file, strings.Join(buffer, ","))
+	// Build format required by Concourse and print it out.
+	fmt.Fprintln(&output.file, buildConcourseFormat(loginData))
 
 }

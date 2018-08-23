@@ -45,7 +45,12 @@ jobs:
           name: test
           command: |
             mkdir -p $GOCACHE
-            go build -v
+            go test
+
+      - run:
+          name: build
+          command: |
+            go build -v 
 
       - save_cache:
           key: build-cache-{{ .Branch }}-{{ .Environment.CIRCLE_BUILD_NUM }}

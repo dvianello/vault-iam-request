@@ -22,7 +22,7 @@ jobs:
             - /go/src/github.com/dvianello/vault-iam-request/vendor
 
       - run:
-          name: download-libraries
+          name: Download dependencies
           command: |
             if [ ! -d /go/src/github.com/dvianello/vault-iam-request/vendor ]; then
               curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o /go/bin/dep
@@ -42,15 +42,15 @@ jobs:
               - /tmp/go/cache
 
       - run:
-          name: test
+          name: Test
           command: |
             mkdir -p $GOCACHE
             go test
 
       - run:
-          name: build
+          name: Build
           command: |
-            go build -v 
+            go build -v
 
       - save_cache:
           key: build-cache-{{ .Branch }}-{{ .Environment.CIRCLE_BUILD_NUM }}

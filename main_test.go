@@ -48,37 +48,37 @@ func TestOutputConfigurationJson(t *testing.T) {
 	//
 
 	// Define custom args for testing
-	args_long := []string{
+	argsLong := []string{
 		"-r test-role",
 		"--json",
 	}
 
-	args_short := []string{
+	argsShort := []string{
 		"-r test-role",
 		"-j",
 	}
 
-	args_not_present := []string{
+	argsNotPresent := []string{
 		"-r test-role",
 	}
-	var options_long options
-	args_long, err_long := flags.ParseArgs(&options_long, args_long)
-	if err_long != nil {
-		log.Fatal(err_long)
+	var optionsLong options
+	argsLong, errLong := flags.ParseArgs(&optionsLong, argsLong)
+	if errLong != nil {
+		log.Fatal(errLong)
 		assert.Fail("Something went wrong parsing the long args")
 	}
 
-	var options_short options
-	args_short, err_short := flags.ParseArgs(&options_short, args_short)
-	if err_short != nil {
-		log.Fatal(err_short)
+	var optionsShort options
+	argsShort, errShort := flags.ParseArgs(&optionsShort, argsShort)
+	if errShort != nil {
+		log.Fatal(errShort)
 		assert.Fail("Something went wrong parsing the short args")
 	}
 
-	var options_not_present options
-	args_not_present, err_not_present := flags.ParseArgs(&options_not_present, args_not_present)
-	if err_not_present != nil {
-		log.Fatal(err_not_present)
+	var argsNotPresent options
+	argsNotPresent, errNotPresent := flags.ParseArgs(&argsNotPresent, argsNotPresent)
+	if errNotPresent != nil {
+		log.Fatal(errNotPresent)
 		assert.Fail("Something went wrong parsing the non presemt args")
 	}
 
@@ -87,14 +87,14 @@ func TestOutputConfigurationJson(t *testing.T) {
 	//
 
 	// Long flag
-	output := defineOutput(options_long)
+	output := defineOutput(optionsLong)
 	assert.True(output.JSON)
 
 	// Short flag
-	output = defineOutput(options_short)
+	output = defineOutput(optionsShort)
 	assert.True(output.JSON)
 
 	// Not present
-	output = defineOutput(options_not_present)
+	output = defineOutput(argsNotPresent)
 	assert.False(output.JSON)
 }

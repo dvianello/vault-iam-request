@@ -21,7 +21,7 @@ func buildConcourseFormat(rawLoginData map[string]interface{}) string {
 // Define command line options
 type options struct {
 	Role string `short:"r" long:"role" description:"The Vault role to authenticate against" required:"true"`
-	Json bool   `short:"j" long:"json" description:"Output data in JSON format"`
+	JSON bool   `short:"j" long:"json" description:"Output data in JSON format"`
 	File string `short:"f" long:"file" description:"Write output to file instead of stdout"`
 }
 
@@ -46,7 +46,7 @@ func defineOutput(options options) output {
 		output.File = *os.Stdout
 	}
 
-	if options.Json {
+	if options.JSON {
 		output.JSON = true
 	}
 

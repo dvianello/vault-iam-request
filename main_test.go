@@ -46,7 +46,7 @@ func TestOutputConfigurationJson(t *testing.T) {
 	//
 	// Test setup
 	//
-	
+
 	// Define custom args for testing
 	args_long := []string{
 		"-r test-role",

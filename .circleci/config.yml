@@ -11,6 +11,7 @@ jobs:
     environment:
       - GOCACHE: "/tmp/go/cache"
       - DEP_VERSION: 0.5.0
+      - TEST_RESULTS: "/tmp/test-results"
 
     working_directory: /go/src/github.com/dvianello/vault-iam-request
     steps:
@@ -30,6 +31,11 @@ jobs:
               /go/bin/dep ensure
             fi
 
+      - run:
+          name: Download go-junit-report
+          command:
+            go get github.com/jstemmer/go-junit-report
+
       - save_cache:
           key: gopkg-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
           paths:
@@ -42,10 +48,15 @@ jobs:
               - /tmp/go/cache
 
       - run:
-          name: Test
+          name: Create folder to store test results
+          command: mkdir -p ${TEST_RESULTS}
+
+      - run:
+          name: Run unit tests
           command: |
             mkdir -p $GOCACHE
-            go test
+            trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
+            go test | tee ${TEST_RESULTS}/go-test.out
 
       - run:
           name: Build
@@ -56,3 +67,10 @@ jobs:
           key: build-cache-{{ .Branch }}-{{ .Environment.CIRCLE_BUILD_NUM }}
           paths:
               - /tmp/go/cache
+
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+
+      - store_test_results:
+          path: /tmp/test-results

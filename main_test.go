@@ -1,22 +1,21 @@
 package main
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
 	"strings"
+	"testing"
 )
 
-
-func TestConcourseFormat(t *testing.T){
+func TestConcourseFormat(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup test
 	testLoginData := map[string]interface{}{
-		"iam_request_body"			: "test-iam-request-body",
-		"role"						: "test",
-		"iam_http_request_method" 	: "POST",
-		"iam_request_url" 			: "test-iam-request-url",
-		"iam_request_headers" 		: "test-iam-request-headers",
+		"iam_request_body": "test-iam-request-body",
+		"role":             "test",
+		"iam_http_request_method": "POST",
+		"iam_request_url":         "test-iam-request-url",
+		"iam_request_headers":     "test-iam-request-headers",
 	}
 
 	concourseFormat := buildConcourseFormat(testLoginData)
@@ -36,6 +35,5 @@ func TestConcourseFormat(t *testing.T){
 
 	// Check map is the same
 	assert.Equal(testMap, testLoginData)
-
 
 }

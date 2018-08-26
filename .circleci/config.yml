@@ -32,9 +32,10 @@ jobs:
             fi
 
       - run:
-          name: Download go-junit-report
-          command:
+          name: Download required Go packages
+          command: |
             go get github.com/jstemmer/go-junit-report
+            go get github.com/mattn/goveralls
 
       - save_cache:
           key: gopkg-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
@@ -55,8 +56,10 @@ jobs:
           name: Run unit tests
           command: |
             mkdir -p $GOCACHE
+            mkdir -p ${TEST_RESULTS}/coveralls/
             trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
-            go test | tee ${TEST_RESULTS}/go-test.out
+            go test -v -cover -race -coverprofile=${TEST_RESULTS}/coveralls/coverage.out | tee ${TEST_RESULTS}/go-test.out
+            goveralls -coverprofile=${TEST_RESULTS}/coveralls/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
 
       - run:
           name: Build

@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/vault/builtin/credential/aws"
-	"github.com/jessevdk/go-flags"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/hashicorp/vault/builtin/credential/aws"
+	"github.com/jessevdk/go-flags"
 )
 
 func buildConcourseFormat(rawLoginData map[string]interface{}) string {
@@ -21,7 +22,7 @@ func buildConcourseFormat(rawLoginData map[string]interface{}) string {
 // Define command line options
 type options struct {
 	Role string `short:"r" long:"role" description:"The Vault role to authenticate against" required:"true"`
-	Json bool   `short:"j" long:"json" description:"Output data in JSON format"`
+	JSON bool   `short:"j" long:"json" description:"Output data in JSON format"`
 	File string `short:"f" long:"file" description:"Write output to file instead of stdout"`
 }
 
@@ -46,7 +47,7 @@ func defineOutput(options options) output {
 		output.File = *os.Stdout
 	}
 
-	if options.Json {
+	if options.JSON {
 		output.JSON = true
 	}
 
@@ -81,7 +82,7 @@ func main() {
 
 	// If JSON output is required, use encoding/json to
 	// marshall that out
-	if options.Json {
+	if options.JSON {
 		jsonLoginData, _ := json.Marshal(loginData)
 		fmt.Fprintln(&output.File, string(jsonLoginData))
 		os.Exit(0)

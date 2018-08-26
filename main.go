@@ -81,7 +81,7 @@ func main() {
 
 	// If JSON output is required, use encoding/json to
 	// marshall that out
-	if options.Json {
+	if options.JSON {
 		jsonLoginData, _ := json.Marshal(loginData)
 		fmt.Fprintln(&output.File, string(jsonLoginData))
 		os.Exit(0)

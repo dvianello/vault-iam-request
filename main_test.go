@@ -75,8 +75,8 @@ func TestOutputConfigurationJson(t *testing.T) {
 		assert.Fail("Something went wrong parsing the short args")
 	}
 
-	var argsNotPresent options
-	argsNotPresent, errNotPresent := flags.ParseArgs(&argsNotPresent, argsNotPresent)
+	var optionsNotPresent options
+	argsNotPresent, errNotPresent := flags.ParseArgs(&optionsNotPresent, argsNotPresent)
 	if errNotPresent != nil {
 		log.Fatal(errNotPresent)
 		assert.Fail("Something went wrong parsing the non presemt args")
@@ -95,6 +95,6 @@ func TestOutputConfigurationJson(t *testing.T) {
 	assert.True(output.JSON)
 
 	// Not present
-	output = defineOutput(argsNotPresent)
+	output = defineOutput(optionsNotPresent)
 	assert.False(output.JSON)
 }

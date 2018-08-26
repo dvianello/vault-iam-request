@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
+	"log"
 	"strings"
 	"testing"
+
 	"github.com/jessevdk/go-flags"
-	"log"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConcourseFormat(t *testing.T) {
@@ -62,21 +63,21 @@ func TestOutputConfigurationJson(t *testing.T) {
 		"-r test-role",
 	}
 	var optionsLong options
-	argsLong, errLong := flags.ParseArgs(&optionsLong, argsLong)
+	_, errLong := flags.ParseArgs(&optionsLong, argsLong)
 	if errLong != nil {
 		log.Fatal(errLong)
 		assert.Fail("Something went wrong parsing the long args")
 	}
 
 	var optionsShort options
-	argsShort, errShort := flags.ParseArgs(&optionsShort, argsShort)
+	_, errShort := flags.ParseArgs(&optionsShort, argsShort)
 	if errShort != nil {
 		log.Fatal(errShort)
 		assert.Fail("Something went wrong parsing the short args")
 	}
 
 	var optionsNotPresent options
-	argsNotPresent, errNotPresent := flags.ParseArgs(&optionsNotPresent, argsNotPresent)
+	_, errNotPresent := flags.ParseArgs(&optionsNotPresent, argsNotPresent)
 	if errNotPresent != nil {
 		log.Fatal(errNotPresent)
 		assert.Fail("Something went wrong parsing the non presemt args")

@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/vault/builtin/credential/aws"
-	"github.com/jessevdk/go-flags"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/hashicorp/vault/builtin/credential/aws"
+	"github.com/jessevdk/go-flags"
 )
 
 func buildConcourseFormat(rawLoginData map[string]interface{}) string {

@@ -5,9 +5,24 @@ import (
 	"strings"
 	"testing"
 
+	"encoding/json"
 	"github.com/jessevdk/go-flags"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"os"
+	"reflect"
 )
+
+func rebuildMapFromConcourse(concourseFormat string) map[string]interface{} {
+	concourseFormatTokens := strings.Split(concourseFormat, ",")
+	testMap := make(map[string]interface{})
+	for _, e := range concourseFormatTokens {
+		parts := strings.Split(e, "=")
+		testMap[parts[0]] = strings.Trim(strings.TrimSuffix(parts[1], "\n"), "\"")
+	}
+
+	return testMap
+}
 
 func TestConcourseFormat(t *testing.T) {
 	assert := assert.New(t)
@@ -16,8 +31,8 @@ func TestConcourseFormat(t *testing.T) {
 
 	// Test setup
 	testLoginData := map[string]interface{}{
-		"iam_request_body": "test-iam-request-body",
-		"role":             "test",
+		"iam_request_body":        "test-iam-request-body",
+		"role":                    "test",
 		"iam_http_request_method": "POST",
 		"iam_request_url":         "test-iam-request-url",
 		"iam_request_headers":     "test-iam-request-headers",
@@ -29,22 +44,17 @@ func TestConcourseFormat(t *testing.T) {
 	// Test that all expected sub-strings are in there
 
 	// Rebuild map out of the returned string
-	concourseFormatTokens := strings.Split(concourseFormat, ",")
-	testMap := make(map[string]interface{})
-	for _, e := range concourseFormatTokens {
-		parts := strings.Split(e, "=")
-		testMap[parts[0]] = strings.Trim(parts[1], "\"")
-	}
+	concourseFormatData := rebuildMapFromConcourse(concourseFormat)
 
 	// Check length is correct
-	assert.Len(testMap, 5)
+	assert.Len(concourseFormatData, 5)
 
 	// Check map is the same
-	assert.Equal(testMap, testLoginData)
+	assert.Equal(concourseFormatData, testLoginData)
 
 }
 
-func TestOutputConfigurationJson(t *testing.T) {
+func TestOutputConfigurationFormatJSONLong(t *testing.T) {
 	assert := assert.New(t)
 
 	//
@@ -54,39 +64,16 @@ func TestOutputConfigurationJson(t *testing.T) {
 	// Define custom args for testing
 	var call STSCall
 
-	argsLong := []string{
+	args := []string{
 		"-r test-role",
 		"--json",
 	}
 
-	argsShort := []string{
-		"-r test-role",
-		"-j",
-	}
-
-	argsNotPresent := []string{
-		"-r test-role",
-	}
-	
-	var optionsLong options
-	_, errLong := flags.ParseArgs(&optionsLong, argsLong)
+	var options options
+	_, errLong := flags.ParseArgs(&options, args)
 	if errLong != nil {
 		log.Fatal(errLong)
 		assert.Fail("Something went wrong parsing the long args")
-	}
-
-	var optionsShort options
-	_, errShort := flags.ParseArgs(&optionsShort, argsShort)
-	if errShort != nil {
-		log.Fatal(errShort)
-		assert.Fail("Something went wrong parsing the short args")
-	}
-
-	var optionsNotPresent options
-	_, errNotPresent := flags.ParseArgs(&optionsNotPresent, argsNotPresent)
-	if errNotPresent != nil {
-		log.Fatal(errNotPresent)
-		assert.Fail("Something went wrong parsing the non presemt args")
 	}
 
 	//
@@ -94,14 +81,151 @@ func TestOutputConfigurationJson(t *testing.T) {
 	//
 
 	// Long flag
-	call.defineOutput(optionsLong.File, optionsLong.JSON)
+	call.defineOutput(options.File, options.JSON)
 	assert.True(call.JSON)
+
+}
+
+func TestOutputConfigurationFormatJSONShort(t *testing.T) {
+	assert := assert.New(t)
+
+	//
+	// Test setup
+	//
+
+	// Define custom args for testing
+	var call STSCall
+
+	args := []string{
+		"-r test-role",
+		"-j",
+	}
+
+	var options options
+	_, errLong := flags.ParseArgs(&options, args)
+	if errLong != nil {
+		log.Fatal(errLong)
+		assert.Fail("Something went wrong parsing the long args")
+	}
+
+	//
+	// Execute test
+	//
+
+	// Long flag
+	call.defineOutput(options.File, options.JSON)
+	assert.True(call.JSON)
+}
+
+func TestOutputConfigurationFormatNoJSON(t *testing.T) {
+	assert := assert.New(t)
+
+	//
+	// Test setup
+	//
+
+	// Define custom args for testing
+	var call STSCall
+
+	args := []string{
+		"-r test-role",
+	}
+
+	var options options
+	_, errShort := flags.ParseArgs(&options, args)
+	if errShort != nil {
+		log.Fatal(errShort)
+		assert.Fail("Something went wrong parsing the short args")
+	}
+
+	//
+	// Execute tests
+	//
 
 	// Short flag
-	call.defineOutput(optionsShort.File, optionsShort.JSON)
-	assert.True(call.JSON)
+	call.defineOutput(options.File, options.JSON)
+	assert.False(call.JSON)
 
-	// Not present
-	call.defineOutput(optionsLong.File, optionsShort.JSON)
-	assert.True(call.JSON)
+}
+
+func TestOutputConfigurationFile(t *testing.T) {
+	assert := assert.New(t)
+	tmpFile := "/tmp/file"
+
+	var call STSCall
+
+	call.defineOutput("/tmp/file", false)
+
+	assert.Equal(reflect.TypeOf(call.File), reflect.TypeOf(os.File{}))
+	assert.FileExists(tmpFile)
+
+	// cleanup
+	os.Remove(tmpFile)
+}
+
+func TestOutputConfigurationFileJSON(t *testing.T) {
+	assert := assert.New(t)
+
+	tmpFile := "/tmp/json_file"
+	var testContent = map[string]interface{}{
+		"iam_request_body":        "test-iam-request-body",
+		"role":                    "test",
+		"iam_http_request_method": "POST",
+		"iam_request_url":         "test-iam-request-url",
+		"iam_request_headers":     "test-iam-request-headers",
+	}
+
+	var call STSCall
+
+	// Load fake data in STSCall
+	call.Content = testContent
+
+	// Write out data & check if file exists
+	call.WriteOutput(tmpFile, true)
+	assert.FileExists(tmpFile)
+
+	// Try to parse JSON back & compare to original
+	var data map[string]interface{}
+	jsonFileContent, _ := ioutil.ReadFile(tmpFile)
+	err := json.Unmarshal(jsonFileContent, &data)
+	if err != nil {
+		assert.Fail("Failed to unmarshal the JSON file.")
+	}
+
+	assert.Equal(testContent, data)
+
+	// cleanup
+	os.Remove(tmpFile)
+
+}
+
+func TestOutputConfigurationFileConcourse(t *testing.T) {
+	assert := assert.New(t)
+
+	tmpFile := "/tmp/concourse_file"
+	var testContent = map[string]interface{}{
+		"iam_request_body":        "test-iam-request-body",
+		"role":                    "test",
+		"iam_http_request_method": "POST",
+		"iam_request_url":         "test-iam-request-url",
+		"iam_request_headers":     "test-iam-request-headers",
+	}
+
+	var call STSCall
+
+	// Load fake data in STSCall
+	call.Content = testContent
+
+	// Write out data & check if file exists
+	call.WriteOutput(tmpFile, false)
+	assert.FileExists(tmpFile)
+
+	// Try to parse Concourse format back & compare to original
+	concourseFileContent, _ := ioutil.ReadFile(tmpFile)
+	concourseFileData := rebuildMapFromConcourse(string(concourseFileContent))
+	assert.Equal(concourseFileData, testContent)
+
+	// cleanup
+	os.Remove(tmpFile)
+
 }

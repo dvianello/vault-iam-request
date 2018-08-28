@@ -11,14 +11,6 @@ import (
 	"github.com/jessevdk/go-flags"
 )
 
-func buildConcourseFormat(rawLoginData map[string]interface{}) string {
-	buffer := make([]string, 0)
-	for k, v := range rawLoginData {
-		buffer = append(buffer, fmt.Sprintf("%s=\"%s\"", k, v))
-	}
-	return strings.Join(buffer, ",")
-}
-
 // Define command line options
 type options struct {
 	Role string `short:"r" long:"role" description:"The Vault role to authenticate against" required:"true"`
@@ -26,33 +18,68 @@ type options struct {
 	File string `short:"f" long:"file" description:"Write output to file instead of stdout"`
 }
 
-// Struct to define output configuratioj
-type output struct {
+// Struct to define output configuration
+type STSCall struct {
+	Role string
 	File os.File
 	JSON bool
+	Content map[string]interface{}
 }
 
-func defineOutput(options options) output {
-	var output output
+//GenerateLoginData
+func (call *STSCall) GenerateLoginData(role string) {
 
-	if options.File != "" {
-		fileWriter, err := os.Create(options.File)
+	// Generate login data via awsauth package
+	loginData, err := awsauth.GenerateLoginData("", "", "", "")
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+
+	// Add role to loginData since we need to send it along
+	// when authenticating to Vault
+	loginData["role"] = role
+	call.Content = loginData
+}
+
+func (call *STSCall) defineOutput(file string, json bool) {
+	if file != "" {
+		fileWriter, err := os.Create(file)
 		if err != nil {
 			fmt.Println("File does not exists or cannot be created")
 			os.Exit(1)
 		}
-		output.File = *fileWriter
+		call.File = *fileWriter
 		defer fileWriter.Close()
+
 	} else {
-		output.File = *os.Stdout
+		call.File = *os.Stdout
 	}
 
-	if options.JSON {
-		output.JSON = true
+	if json {
+		call.JSON = true
+	}
+}
+
+func (call *STSCall) WriteOutput(file string, JSONOutput bool){
+	call.defineOutput(file, JSONOutput)
+
+	if call.JSON {
+		jsonLoginData, _ := json.Marshal(call.Content)
+		fmt.Fprintln(&call.File, string(jsonLoginData))
+		os.Exit(0)
 	}
 
-	return output
+	fmt.Fprintln(&call.File, call.buildConcourseFormat())
 
+}
+
+func (call *STSCall) buildConcourseFormat() string {
+	buffer := make([]string, 0)
+	for k, v := range call.Content {
+		buffer = append(buffer, fmt.Sprintf("%s=\"%s\"", k, v))
+	}
+	return strings.Join(buffer, ",")
 }
 
 func main() {
@@ -66,29 +93,9 @@ func main() {
 		os.Exit(1)
 	}
 
+
+	var call STSCall
 	// Leverage Vault awsauth to generate LoginData
-	loginData, err := awsauth.GenerateLoginData("", "", "", "")
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
-
-	// Add role to login data, as we need to send that along as well to the
-	// vault server.
-	loginData["role"] = options.Role
-
-	// Define output configuration
-	output := defineOutput(options)
-
-	// If JSON output is required, use encoding/json to
-	// marshall that out
-	if options.JSON {
-		jsonLoginData, _ := json.Marshal(loginData)
-		fmt.Fprintln(&output.File, string(jsonLoginData))
-		os.Exit(0)
-	}
-
-	// Build format required by Concourse and print it out.
-	fmt.Fprintln(&output.File, buildConcourseFormat(loginData))
-
+	call.GenerateLoginData(options.Role)
+	call.WriteOutput(options.File, options.JSON)
 }

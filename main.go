@@ -18,15 +18,16 @@ type options struct {
 	File string `short:"f" long:"file" description:"Write output to file instead of stdout"`
 }
 
-// Struct to define output configuration
+// STSCall Struct to define output configuration
 type STSCall struct {
-	Role string
-	File os.File
-	JSON bool
+	Role    string
+	File    os.File
+	JSON    bool
 	Content map[string]interface{}
 }
 
-//GenerateLoginData
+// GenerateLoginData builds the STS call via the Vault awsauth lib and adds
+// a 'role' key to it.
 func (call *STSCall) GenerateLoginData(role string) {
 
 	// Generate login data via awsauth package
@@ -50,7 +51,6 @@ func (call *STSCall) defineOutput(file string, json bool) {
 			os.Exit(1)
 		}
 		call.File = *fileWriter
-		defer fileWriter.Close()
 
 	} else {
 		call.File = *os.Stdout
@@ -61,17 +61,19 @@ func (call *STSCall) defineOutput(file string, json bool) {
 	}
 }
 
-func (call *STSCall) WriteOutput(file string, JSONOutput bool){
+// WriteOutput writes the STS call defined output
+func (call *STSCall) WriteOutput(file string, JSONOutput bool) {
 	call.defineOutput(file, JSONOutput)
 
 	if call.JSON {
 		jsonLoginData, _ := json.Marshal(call.Content)
 		fmt.Fprintln(&call.File, string(jsonLoginData))
-		os.Exit(0)
+
+	} else {
+		fmt.Fprintln(&call.File, call.buildConcourseFormat())
 	}
 
-	fmt.Fprintln(&call.File, call.buildConcourseFormat())
-
+	call.File.Close()
 }
 
 func (call *STSCall) buildConcourseFormat() string {
@@ -79,6 +81,7 @@ func (call *STSCall) buildConcourseFormat() string {
 	for k, v := range call.Content {
 		buffer = append(buffer, fmt.Sprintf("%s=\"%s\"", k, v))
 	}
+
 	return strings.Join(buffer, ",")
 }
 
@@ -92,7 +95,6 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-
 
 	var call STSCall
 	// Leverage Vault awsauth to generate LoginData

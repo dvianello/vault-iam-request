@@ -12,6 +12,8 @@ import (
 func TestConcourseFormat(t *testing.T) {
 	assert := assert.New(t)
 
+	var call STSCall
+
 	// Test setup
 	testLoginData := map[string]interface{}{
 		"iam_request_body": "test-iam-request-body",
@@ -21,7 +23,8 @@ func TestConcourseFormat(t *testing.T) {
 		"iam_request_headers":     "test-iam-request-headers",
 	}
 
-	concourseFormat := buildConcourseFormat(testLoginData)
+	call.Content = testLoginData
+	concourseFormat := call.buildConcourseFormat()
 
 	// Test that all expected sub-strings are in there
 
@@ -49,6 +52,8 @@ func TestOutputConfigurationJson(t *testing.T) {
 	//
 
 	// Define custom args for testing
+	var call STSCall
+
 	argsLong := []string{
 		"-r test-role",
 		"--json",
@@ -62,6 +67,7 @@ func TestOutputConfigurationJson(t *testing.T) {
 	argsNotPresent := []string{
 		"-r test-role",
 	}
+	
 	var optionsLong options
 	_, errLong := flags.ParseArgs(&optionsLong, argsLong)
 	if errLong != nil {
@@ -88,14 +94,14 @@ func TestOutputConfigurationJson(t *testing.T) {
 	//
 
 	// Long flag
-	output := defineOutput(optionsLong)
-	assert.True(output.JSON)
+	call.defineOutput(optionsLong.File, optionsLong.JSON)
+	assert.True(call.JSON)
 
 	// Short flag
-	output = defineOutput(optionsShort)
-	assert.True(output.JSON)
+	call.defineOutput(optionsShort.File, optionsShort.JSON)
+	assert.True(call.JSON)
 
 	// Not present
-	output = defineOutput(optionsNotPresent)
-	assert.False(output.JSON)
+	call.defineOutput(optionsLong.File, optionsShort.JSON)
+	assert.True(call.JSON)
 }

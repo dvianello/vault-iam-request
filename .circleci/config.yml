@@ -56,9 +56,9 @@ jobs:
           name: Run unit tests
           command: |
             mkdir -p $GOCACHE
-            mkdir -p ${TEST_RESULTS}/coveralls/
-            trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
-            go test -v -cover -race -coverprofile=${TEST_RESULTS}/coveralls/coverage.out | tee ${TEST_RESULTS}/go-test.out
+            mkdir -p ${TEST_RESULTS}/{gotest,coveralls}
+            trap "go-junit-report <${TEST_RESULTS}/gotest/go-test.out > ${TEST_RESULTS}/gotest/go-test-report.xml" EXIT
+            go test -v -cover -coverprofile=${TEST_RESULTS}/coveralls/coverage.out | tee ${TEST_RESULTS}/gotest/go-test.out
             goveralls -coverprofile=${TEST_RESULTS}/coveralls/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
 
       - run:
@@ -76,4 +76,4 @@ jobs:
           destination: raw-test-output
 
       - store_test_results:
-          path: /tmp/test-results
+          path: /tmp/test-results/

@@ -81,7 +81,11 @@ func TestOutputConfigurationFormatJSONLong(t *testing.T) {
 	//
 
 	// Long flag
-	call.defineOutput(options.File, options.JSON)
+	err := call.defineOutput(options.File, options.JSON)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
+
 	assert.True(call.JSON)
 
 }
@@ -113,7 +117,11 @@ func TestOutputConfigurationFormatJSONShort(t *testing.T) {
 	//
 
 	// Long flag
-	call.defineOutput(options.File, options.JSON)
+	err := call.defineOutput(options.File, options.JSON)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
+
 	assert.True(call.JSON)
 }
 
@@ -143,7 +151,11 @@ func TestOutputConfigurationFormatNoJSON(t *testing.T) {
 	//
 
 	// Short flag
-	call.defineOutput(options.File, options.JSON)
+	err := call.defineOutput(options.File, options.JSON)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
+
 	assert.False(call.JSON)
 
 }
@@ -154,13 +166,26 @@ func TestOutputConfigurationFile(t *testing.T) {
 
 	var call STSCall
 
-	call.defineOutput("/tmp/file", false)
+	err := call.defineOutput(tmpFile, false)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
 
 	assert.Equal(reflect.TypeOf(call.File), reflect.TypeOf(os.File{}))
 	assert.FileExists(tmpFile)
 
 	// cleanup
 	os.Remove(tmpFile)
+}
+
+func TestOutputConfigurationFileError(t *testing.T) {
+	assert := assert.New(t)
+	tmpFile := "/test"
+
+	var call STSCall
+
+	err := call.defineOutput(tmpFile, false)
+	assert.Error(err, "path does not exists or cannot be created")
 }
 
 func TestOutputConfigurationFileJSON(t *testing.T) {
@@ -181,13 +206,17 @@ func TestOutputConfigurationFileJSON(t *testing.T) {
 	call.Content = testContent
 
 	// Write out data & check if file exists
-	call.WriteOutput(tmpFile, true)
+	err := call.WriteOutput(tmpFile, true)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
+
 	assert.FileExists(tmpFile)
 
 	// Try to parse JSON back & compare to original
 	var data map[string]interface{}
 	jsonFileContent, _ := ioutil.ReadFile(tmpFile)
-	err := json.Unmarshal(jsonFileContent, &data)
+	err = json.Unmarshal(jsonFileContent, &data)
 	if err != nil {
 		assert.Fail("Failed to unmarshal the JSON file.")
 	}
@@ -217,7 +246,11 @@ func TestOutputConfigurationFileConcourse(t *testing.T) {
 	call.Content = testContent
 
 	// Write out data & check if file exists
-	call.WriteOutput(tmpFile, false)
+	err := call.WriteOutput(tmpFile, false)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
+
 	assert.FileExists(tmpFile)
 
 	// Try to parse Concourse format back & compare to original

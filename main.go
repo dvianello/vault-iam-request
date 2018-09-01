@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"errors"
 	"github.com/hashicorp/vault/builtin/credential/aws"
 	"github.com/jessevdk/go-flags"
 )
@@ -43,12 +44,11 @@ func (call *STSCall) GenerateLoginData(role string) {
 	call.Content = loginData
 }
 
-func (call *STSCall) defineOutput(file string, json bool) {
+func (call *STSCall) defineOutput(file string, json bool) (err error) {
 	if file != "" {
 		fileWriter, err := os.Create(file)
 		if err != nil {
-			fmt.Println("File does not exists or cannot be created")
-			os.Exit(1)
+			return errors.New("path does not exists or cannot be created")
 		}
 		call.File = *fileWriter
 
@@ -59,11 +59,17 @@ func (call *STSCall) defineOutput(file string, json bool) {
 	if json {
 		call.JSON = true
 	}
+
+	return
 }
 
 // WriteOutput writes the STS call defined output
-func (call *STSCall) WriteOutput(file string, JSONOutput bool) {
-	call.defineOutput(file, JSONOutput)
+func (call *STSCall) WriteOutput(file string, JSONOutput bool) (err error) {
+	err = call.defineOutput(file, JSONOutput)
+
+	if err != nil {
+		return err
+	}
 
 	if call.JSON {
 		jsonLoginData, _ := json.Marshal(call.Content)
@@ -74,6 +80,7 @@ func (call *STSCall) WriteOutput(file string, JSONOutput bool) {
 	}
 
 	call.File.Close()
+	return
 }
 
 func (call *STSCall) buildConcourseFormat() string {
@@ -93,11 +100,17 @@ func main() {
 	// Parse command line flags
 	_, err := flags.Parse(&options)
 	if err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	var call STSCall
 	// Leverage Vault awsauth to generate LoginData
 	call.GenerateLoginData(options.Role)
-	call.WriteOutput(options.File, options.JSON)
+	err = call.WriteOutput(options.File, options.JSON)
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }

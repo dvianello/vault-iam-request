@@ -178,13 +178,23 @@ func TestOutputConfigurationFile(t *testing.T) {
 	os.Remove(tmpFile)
 }
 
-func TestOutputConfigurationFileError(t *testing.T) {
+func TestDefineOutputConfigurationFileError(t *testing.T) {
 	assert := assert.New(t)
 	tmpFile := "/test"
 
 	var call STSCall
 
 	err := call.defineOutput(tmpFile, false)
+	assert.Error(err, "path does not exists or cannot be created")
+}
+
+func TestWriteOutputConfigurationFileError(t *testing.T) {
+	assert := assert.New(t)
+	tmpFile := "/test"
+
+	var call STSCall
+
+	err := call.writeOutput(tmpFile, false)
 	assert.Error(err, "path does not exists or cannot be created")
 }
 

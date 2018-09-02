@@ -81,7 +81,11 @@ func TestOutputConfigurationFormatJSONLong(t *testing.T) {
 	//
 
 	// Long flag
-	call.defineOutput(options.File, options.JSON)
+	err := call.defineOutput(options.File, options.JSON)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
+
 	assert.True(call.JSON)
 
 }
@@ -113,7 +117,11 @@ func TestOutputConfigurationFormatJSONShort(t *testing.T) {
 	//
 
 	// Long flag
-	call.defineOutput(options.File, options.JSON)
+	err := call.defineOutput(options.File, options.JSON)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
+
 	assert.True(call.JSON)
 }
 
@@ -143,7 +151,11 @@ func TestOutputConfigurationFormatNoJSON(t *testing.T) {
 	//
 
 	// Short flag
-	call.defineOutput(options.File, options.JSON)
+	err := call.defineOutput(options.File, options.JSON)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
+
 	assert.False(call.JSON)
 
 }
@@ -154,13 +166,36 @@ func TestOutputConfigurationFile(t *testing.T) {
 
 	var call STSCall
 
-	call.defineOutput("/tmp/file", false)
+	err := call.defineOutput(tmpFile, false)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
 
 	assert.Equal(reflect.TypeOf(call.File), reflect.TypeOf(os.File{}))
 	assert.FileExists(tmpFile)
 
 	// cleanup
 	os.Remove(tmpFile)
+}
+
+func TestDefineOutputConfigurationFileError(t *testing.T) {
+	assert := assert.New(t)
+	tmpFile := "/test"
+
+	var call STSCall
+
+	err := call.defineOutput(tmpFile, false)
+	assert.Error(err, "path does not exists or cannot be created")
+}
+
+func TestWriteOutputConfigurationFileError(t *testing.T) {
+	assert := assert.New(t)
+	tmpFile := "/test"
+
+	var call STSCall
+
+	err := call.writeOutput(tmpFile, false)
+	assert.Error(err, "path does not exists or cannot be created")
 }
 
 func TestOutputConfigurationFileJSON(t *testing.T) {
@@ -181,13 +216,17 @@ func TestOutputConfigurationFileJSON(t *testing.T) {
 	call.Content = testContent
 
 	// Write out data & check if file exists
-	call.WriteOutput(tmpFile, true)
+	err := call.writeOutput(tmpFile, true)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
+
 	assert.FileExists(tmpFile)
 
 	// Try to parse JSON back & compare to original
 	var data map[string]interface{}
 	jsonFileContent, _ := ioutil.ReadFile(tmpFile)
-	err := json.Unmarshal(jsonFileContent, &data)
+	err = json.Unmarshal(jsonFileContent, &data)
 	if err != nil {
 		assert.Fail("Failed to unmarshal the JSON file.")
 	}
@@ -217,7 +256,11 @@ func TestOutputConfigurationFileConcourse(t *testing.T) {
 	call.Content = testContent
 
 	// Write out data & check if file exists
-	call.WriteOutput(tmpFile, false)
+	err := call.writeOutput(tmpFile, false)
+	if err != nil {
+		assert.Fail("non-nil error")
+	}
+
 	assert.FileExists(tmpFile)
 
 	// Try to parse Concourse format back & compare to original
@@ -227,5 +270,82 @@ func TestOutputConfigurationFileConcourse(t *testing.T) {
 
 	// cleanup
 	os.Remove(tmpFile)
+
+}
+
+func TestMockedAWSCall(t *testing.T) {
+	assert := assert.New(t)
+	role := "testRole"
+
+	testLoginData := map[string]interface{}{
+		"iam_request_body":        "test-iam-request-body",
+		"iam_http_request_method": "POST",
+		"iam_request_url":         "test-iam-request-url",
+		"iam_request_headers":     "test-iam-request-headers",
+	}
+
+	var call STSCall
+	call.Test = testLoginData
+	testLoginData["role"] = role
+
+	err := call.generateLoginData(role)
+
+	assert.Equal(err, nil)
+	assert.Equal(call.Content, testLoginData)
+}
+
+func TestFailedAWSCall(t *testing.T) {
+	assert := assert.New(t)
+	role := "testRole"
+
+	var call STSCall
+
+	err := call.generateLoginData(role)
+	if err == nil {
+		assert.Fail("Nil error, but it should have been non-nil")
+		println(err)
+	}
+
+	assert.Error(err, "call to AWS failed. Check your credentials")
+}
+
+func TestMockedAWSCallBuild(t *testing.T) {
+	assert := assert.New(t)
+	role := "testRole"
+	file := "/tmp/testfile"
+	json := false
+	testLoginData := map[string]interface{}{
+		"iam_request_body":        "test-iam-request-body",
+		"iam_http_request_method": "POST",
+		"iam_request_url":         "test-iam-request-url",
+		"iam_request_headers":     "test-iam-request-headers",
+	}
+
+	var call STSCall
+	call.Test = testLoginData
+	testLoginData["role"] = role
+
+	err := call.BuildCall(role, file, json)
+
+	assert.Equal(err, nil)
+	assert.Equal(call.Content, testLoginData)
+
+}
+
+func TestFailedAWSCallBuild(t *testing.T) {
+	assert := assert.New(t)
+	role := "testRole"
+	file := "/tmp/testfile"
+	json := false
+
+	var call STSCall
+
+	err := call.BuildCall(role, file, json)
+	if err == nil {
+		assert.Fail("Nil error, but it should have been non-nil")
+		println(err)
+	}
+
+	assert.Error(err, "call to AWS failed. Check your credentials")
 
 }

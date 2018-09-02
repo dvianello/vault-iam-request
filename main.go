@@ -25,6 +25,7 @@ type STSCall struct {
 	File    os.File
 	JSON    bool
 	Content map[string]interface{}
+	Test    map[string]interface{}
 }
 
 func (call *STSCall) buildConcourseFormat() string {
@@ -39,13 +40,24 @@ func (call *STSCall) buildConcourseFormat() string {
 // GenerateLoginData builds the STS call via the Vault awsauth lib and adds
 // a 'role' key to it.
 func (call *STSCall) generateLoginData(role string) (err error) {
+	var loginData map[string]interface{}
 
-	// Generate login data via awsauth package
-	loginData, err := awsauth.GenerateLoginData("", "", "", "")
-	if err != nil {
-		log.Println(err)
-		return errors.New("call to AWS failed. Check your credentials")
+	// If testing, pass back mock loginData
+	if len(call.Test) != 0 {
+		loginData = call.Test
+
+	} else {
+		// Generate login data via awsauth package
+		loginData, err = awsauth.GenerateLoginData("", "", "", "")
+		if err != nil {
+			log.Println(err)
+			return errors.New("call to AWS failed. Check your credentials")
+		}
 	}
+
+	// Add role to loginData since we need to send it along
+	// when authenticating to Vault
+	loginData["role"] = role
 
 	call.Content = loginData
 	return
@@ -99,10 +111,6 @@ func (call *STSCall) BuildCall(role, file string, JSONOutput bool) (err error) {
 	if err != nil {
 		return
 	}
-
-	// Add role to loginData since we need to send it along
-	// when authenticating to Vault
-	call.Content["role"] = role
 
 	// Write call out
 	err = call.writeOutput(file, JSONOutput)

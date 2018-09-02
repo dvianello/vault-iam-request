@@ -47,9 +47,6 @@ func (call *STSCall) generateLoginData(role string) (err error) {
 		return errors.New("call to AWS failed. Check your credentials")
 	}
 
-	// Add role to loginData since we need to send it along
-	// when authenticating to Vault
-	loginData["role"] = role
 	call.Content = loginData
 	return
 }
@@ -103,8 +100,13 @@ func (call *STSCall) BuildCall(role, file string, JSONOutput bool) (err error) {
 		return
 	}
 
+	// Add role to loginData since we need to send it along
+	// when authenticating to Vault
+	call.Content["role"] = role
+
 	// Write call out
 	err = call.writeOutput(file, JSONOutput)
+
 	return
 }
 
@@ -116,8 +118,7 @@ func main() {
 	// Parse command line flags
 	_, err := flags.Parse(&options)
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	var call STSCall
@@ -125,7 +126,6 @@ func main() {
 	err = call.BuildCall(options.Role, options.File, options.JSON)
 
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }

@@ -1,11 +1,11 @@
+---
 # Golang CircleCI 2.0 configuration file
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
-  build:
+  test:
     docker:
-      # specify the version
       - image: circleci/golang:1.10.0
 
     environment:
@@ -14,6 +14,7 @@ jobs:
       - TEST_RESULTS: "/tmp/test-results"
 
     working_directory: /go/src/github.com/dvianello/vault-iam-request
+
     steps:
       - checkout
 
@@ -44,9 +45,9 @@ jobs:
 
       - restore_cache:
           keys:
-              - build-cache-{{ .Branch }}-{{ .Environment.CIRCLE_PREVIOUS_BUILD_NUM }}
+            - build-cache-{{ .Branch }}-{{ .Environment.CIRCLE_PREVIOUS_BUILD_NUM }}
           paths:
-              - /tmp/go/cache
+            - /tmp/go/cache
 
       - run:
           name: Create folder to store test results
@@ -61,19 +62,69 @@ jobs:
             go test -v -cover -coverprofile=${TEST_RESULTS}/coveralls/coverage.out | tee ${TEST_RESULTS}/gotest/go-test.out
             goveralls -coverprofile=${TEST_RESULTS}/coveralls/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
 
-      - run:
-          name: Build
-          command: |
-            go build -v
-
-      - save_cache:
-          key: build-cache-{{ .Branch }}-{{ .Environment.CIRCLE_BUILD_NUM }}
-          paths:
-              - /tmp/go/cache
-
       - store_artifacts:
           path: /tmp/test-results
           destination: raw-test-output
 
       - store_test_results:
           path: /tmp/test-results/
+
+  build:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.10.0
+
+    environment:
+      - GOCACHE: "/tmp/go/cache"
+      - DEP_VERSION: 0.5.0
+      - TEST_RESULTS: "/tmp/test-results"
+
+    working_directory: /go/src/github.com/dvianello/vault-iam-request
+    steps:
+      - checkout
+
+      - run:
+          name: Download dependencies
+          command: |
+            go get github.com/mitchellh/gox
+            go get github.com/tcnksm/ghr
+            apt-get install -y upx
+
+      - restore_cache:
+          key: gopkg-{{ .Branch }}-{{ checksum "Gopkg.lock" }}
+          paths:
+            - /go/src/github.com/dvianello/vault-iam-request/vendor
+
+      - restore_cache:
+          keys:
+            - build-cache-{{ .Branch }}-{{ .Environment.CIRCLE_PREVIOUS_BUILD_NUM }}
+          paths:
+            - /tmp/go/cache
+
+      - run:
+          name: Build
+          command: |
+            build_scripts/build.sh
+
+      - save_cache:
+          key: build-cache-{{ .Branch }}-{{ .Environment.CIRCLE_BUILD_NUM }}
+          paths:
+            - /tmp/go/cache
+
+
+workflows:
+  version: 2
+  test-build:
+    jobs:
+      - test:
+          filters:  # required since `deploy` has tag filters AND requires `build`
+            tags:
+              only: /.*/
+      - build:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /[0-9]\.[0-9]\.[0-9]/
+            branches:
+              ignore: /.*/

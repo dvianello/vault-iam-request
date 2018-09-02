@@ -206,7 +206,7 @@ func TestOutputConfigurationFileJSON(t *testing.T) {
 	call.Content = testContent
 
 	// Write out data & check if file exists
-	err := call.WriteOutput(tmpFile, true)
+	err := call.writeOutput(tmpFile, true)
 	if err != nil {
 		assert.Fail("non-nil error")
 	}
@@ -246,7 +246,7 @@ func TestOutputConfigurationFileConcourse(t *testing.T) {
 	call.Content = testContent
 
 	// Write out data & check if file exists
-	err := call.WriteOutput(tmpFile, false)
+	err := call.writeOutput(tmpFile, false)
 	if err != nil {
 		assert.Fail("non-nil error")
 	}
@@ -262,3 +262,43 @@ func TestOutputConfigurationFileConcourse(t *testing.T) {
 	os.Remove(tmpFile)
 
 }
+
+func TestFailedAWSCall(t *testing.T) {
+	assert := assert.New(t)
+	role := "testRole"
+
+	var call STSCall
+
+	err := call.generateLoginData(role)
+	if err == nil {
+		assert.Fail("Nil error, but it should have been non-nil")
+		println(err)
+	}
+
+	assert.Error(err, "call to AWS failed. Check your credentials")
+}
+
+func TestFailedAWSCallBuild(t *testing.T) {
+	assert := assert.New(t)
+	role := "testRole"
+	file := "/testfile"
+	json := false
+
+	var call STSCall
+
+	err := call.BuildCall(role, file, json)
+	if err == nil {
+		assert.Fail("Nil error, but it should have been non-nil")
+		println(err)
+	}
+
+	assert.Error(err, "call to AWS failed. Check your credentials")
+
+}
+
+//func TestSuccessfullAWSCall(t *testing.T){
+//	assert := assert.New(t)
+//	role := "testRole"
+//
+//
+//}

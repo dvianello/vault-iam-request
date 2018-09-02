@@ -273,6 +273,27 @@ func TestOutputConfigurationFileConcourse(t *testing.T) {
 
 }
 
+func TestMockedAWSCall(t *testing.T) {
+	assert := assert.New(t)
+	role := "testRole"
+
+	testLoginData := map[string]interface{}{
+		"iam_request_body":        "test-iam-request-body",
+		"iam_http_request_method": "POST",
+		"iam_request_url":         "test-iam-request-url",
+		"iam_request_headers":     "test-iam-request-headers",
+	}
+
+	var call STSCall
+	call.Test = testLoginData
+	testLoginData["role"] = role
+
+	err := call.generateLoginData(role)
+
+	assert.Equal(err, nil)
+	assert.Equal(call.Content, testLoginData)
+}
+
 func TestFailedAWSCall(t *testing.T) {
 	assert := assert.New(t)
 	role := "testRole"
@@ -288,10 +309,33 @@ func TestFailedAWSCall(t *testing.T) {
 	assert.Error(err, "call to AWS failed. Check your credentials")
 }
 
+func TestMockedAWSCallBuild(t *testing.T) {
+	assert := assert.New(t)
+	role := "testRole"
+	file := "/tmp/testfile"
+	json := false
+	testLoginData := map[string]interface{}{
+		"iam_request_body":        "test-iam-request-body",
+		"iam_http_request_method": "POST",
+		"iam_request_url":         "test-iam-request-url",
+		"iam_request_headers":     "test-iam-request-headers",
+	}
+
+	var call STSCall
+	call.Test = testLoginData
+	testLoginData["role"] = role
+
+	err := call.BuildCall(role, file, json)
+
+	assert.Equal(err, nil)
+	assert.Equal(call.Content, testLoginData)
+
+}
+
 func TestFailedAWSCallBuild(t *testing.T) {
 	assert := assert.New(t)
 	role := "testRole"
-	file := "/testfile"
+	file := "/tmp/testfile"
 	json := false
 
 	var call STSCall
@@ -305,10 +349,3 @@ func TestFailedAWSCallBuild(t *testing.T) {
 	assert.Error(err, "call to AWS failed. Check your credentials")
 
 }
-
-//func TestSuccessfullAWSCall(t *testing.T){
-//	assert := assert.New(t)
-//	role := "testRole"
-//
-//
-//}

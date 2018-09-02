@@ -27,21 +27,31 @@ type STSCall struct {
 	Content map[string]interface{}
 }
 
+func (call *STSCall) buildConcourseFormat() string {
+	buffer := make([]string, 0)
+	for k, v := range call.Content {
+		buffer = append(buffer, fmt.Sprintf("%s=\"%s\"", k, v))
+	}
+
+	return strings.Join(buffer, ",")
+}
+
 // GenerateLoginData builds the STS call via the Vault awsauth lib and adds
 // a 'role' key to it.
-func (call *STSCall) GenerateLoginData(role string) {
+func (call *STSCall) generateLoginData(role string) (err error) {
 
 	// Generate login data via awsauth package
 	loginData, err := awsauth.GenerateLoginData("", "", "", "")
 	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
+		log.Println(err)
+		return errors.New("call to AWS failed. Check your credentials")
 	}
 
 	// Add role to loginData since we need to send it along
 	// when authenticating to Vault
 	loginData["role"] = role
 	call.Content = loginData
+	return
 }
 
 func (call *STSCall) defineOutput(file string, json bool) (err error) {
@@ -59,18 +69,19 @@ func (call *STSCall) defineOutput(file string, json bool) (err error) {
 	if json {
 		call.JSON = true
 	}
-
 	return
 }
 
-// WriteOutput writes the STS call defined output
-func (call *STSCall) WriteOutput(file string, JSONOutput bool) (err error) {
-	err = call.defineOutput(file, JSONOutput)
+// writeOutput writes the STS call defined output
+func (call *STSCall) writeOutput(file string, JSONOutput bool) (err error) {
 
+	// Decide where to output call
+	err = call.defineOutput(file, JSONOutput)
 	if err != nil {
 		return err
 	}
 
+	// Output the call
 	if call.JSON {
 		jsonLoginData, _ := json.Marshal(call.Content)
 		fmt.Fprintln(&call.File, string(jsonLoginData))
@@ -83,13 +94,18 @@ func (call *STSCall) WriteOutput(file string, JSONOutput bool) (err error) {
 	return
 }
 
-func (call *STSCall) buildConcourseFormat() string {
-	buffer := make([]string, 0)
-	for k, v := range call.Content {
-		buffer = append(buffer, fmt.Sprintf("%s=\"%s\"", k, v))
+// BuildCall builds the STS call and writes it out to the output defined by the user
+func (call *STSCall) BuildCall(role, file string, JSONOutput bool) (err error) {
+
+	// Call AWS and generate STS call
+	err = call.generateLoginData(role)
+	if err != nil {
+		return
 	}
 
-	return strings.Join(buffer, ",")
+	// Write call out
+	err = call.writeOutput(file, JSONOutput)
+	return
 }
 
 func main() {
@@ -100,17 +116,16 @@ func main() {
 	// Parse command line flags
 	_, err := flags.Parse(&options)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		os.Exit(1)
 	}
 
 	var call STSCall
 	// Leverage Vault awsauth to generate LoginData
-	call.GenerateLoginData(options.Role)
-	err = call.WriteOutput(options.File, options.JSON)
+	err = call.BuildCall(options.Role, options.File, options.JSON)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		os.Exit(1)
 	}
 }

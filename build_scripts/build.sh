@@ -6,15 +6,14 @@ echo "
 ###
 ## Build binaries
 ###"
-
 gox -os="linux darwin" -arch="amd64" -output="${BINARIES_FOLDER}/vault-iam-request_{{.OS}}-{{.Arch}}"
 
 
-echo "
-###
-## UPX binaries
-###"
-upx "${BINARIES_FOLDER}"/*
+#echo "
+####
+### UPX binaries
+####"
+#upx "${BINARIES_FOLDER}"/*
 
 
 
@@ -33,10 +32,11 @@ for binary in vault-*; do
 done
 cd ..
 
+ls "${BINARIES_FOLDER}"
 
 echo "
 ###
 ## Upload release to Github
 ###
 "
-ghr "${CIRCLE_TAG}" "${BINARIES_FOLDER}/*.tar.gz"
+ghr "${CIRCLE_TAG}" "${BINARIES_FOLDER}"/*.tar.gz

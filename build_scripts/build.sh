@@ -39,4 +39,4 @@ echo "
 ## Upload release to Github
 ###
 "
-ghr "${CIRCLE_TAG}" "${BINARIES_FOLDER}"/*.tar.gz
+ghr "${CIRCLE_TAG}" "${BINARIES_FOLDER}/"

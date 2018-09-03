@@ -88,7 +88,6 @@ jobs:
           command: |
             go get github.com/mitchellh/gox
             go get github.com/tcnksm/ghr
-            apt-get install -y upx
 
       - restore_cache:
           key: gopkg-{{ .Branch }}-{{ checksum "Gopkg.lock" }}

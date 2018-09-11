@@ -6,7 +6,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: circleci/golang:1.10.0
+      - image: vianellod/go-circleci-builder:firsttest
 
     environment:
       - GOCACHE: "/tmp/go/cache"

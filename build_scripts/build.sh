@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -e
+set -u
+
 BINARIES_FOLDER="binaries"
 
 echo "
@@ -9,11 +12,11 @@ echo "
 gox -os="linux darwin" -arch="amd64" -output="${BINARIES_FOLDER}/vault-iam-request_{{.OS}}-{{.Arch}}"
 
 
-#echo "
-####
-### UPX binaries
-####"
-#upx "${BINARIES_FOLDER}"/*
+echo "
+###
+## UPX binaries
+###"
+upx "${BINARIES_FOLDER}"/*
 
 
 

@@ -42,4 +42,4 @@ echo "
 ## Upload release to Github
 ###
 "
-ghr "${CIRCLE_TAG}" "${BINARIES_FOLDER}/"
+ghr -n "${CIRCLE_TAG}" "${CIRCLE_TAG}" "${BINARIES_FOLDER}/"

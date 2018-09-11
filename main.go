@@ -126,7 +126,7 @@ func main() {
 	// Parse command line flags
 	_, err := flags.Parse(&options)
 	if err != nil {
-		log.Fatal(err)
+		os.Exit(1)
 	}
 
 	var call STSCall

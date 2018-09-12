@@ -10,7 +10,7 @@ A small golang script to build the STS request used to perform Vault IAM-based a
 ---
 
 #### Usage
-```bash
+```
 vault-iam-request [OPTIONS]
 
 Application Options:

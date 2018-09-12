@@ -67,7 +67,6 @@ jobs:
 
     environment:
       - GOCACHE: "/tmp/go/cache"
-      - DEP_VERSION: 0.5.0
       - TEST_RESULTS: "/tmp/test-results"
 
     working_directory: /go/src/github.com/dvianello/vault-iam-request

@@ -12,12 +12,12 @@ echo "
 gox -os="linux darwin" -arch="amd64" -output="${BINARIES_FOLDER}/vault-iam-request_{{.OS}}-{{.Arch}}"
 
 
-echo "
+# Disable as it makes the darwin build unusable.
+#echo "
 ###
 ## UPX binaries
 ###"
-upx "${BINARIES_FOLDER}"/*
-
+#upx "${BINARIES_FOLDER}"/*
 
 
 echo "
@@ -35,7 +35,6 @@ for binary in vault-*; do
 done
 cd ..
 
-ls "${BINARIES_FOLDER}"
 
 echo "
 ###
